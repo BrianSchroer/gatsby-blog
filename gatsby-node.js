@@ -29,11 +29,16 @@ exports.createPages = ({ boundActionCreators, graphql }) => {
     }
 
     const posts = result.data.allMarkdownRemark.edges;
+    const lastIndex = posts.length - 1;
 
-    posts.forEach(({ node }) => {
+    posts.forEach(({ node }, index) => {
       createPage({
         path: node.frontmatter.path,
-        component: blogPostTemplate
+        component: blogPostTemplate,
+        context: {
+          prev: index === 0 ? null : posts[index - 1].node,
+          next: index < lastIndex ? posts[index + 1].node : null
+        }
       });
     });
   });
