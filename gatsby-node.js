@@ -1,5 +1,45 @@
 const path = require('path');
 
+function createTagPages(createPage, posts) {
+  const tagsTemplate = path.resolve('src/templates/tags.js');
+  const allTagsTemplate = path.resolve('src/templates/all-tags.js');
+
+  const postsByTags = {};
+
+  posts.forEach(({ node }) => {
+    if (node.frontmatter.tags) {
+      node.frontmatter.tags.forEach(tag => {
+        if (!postsByTags[tag]) {
+          postsByTags[tag] = [];
+        }
+        postsByTags[tag].push(node);
+      });
+    }
+  });
+
+  const tags = Object.keys(postsByTags);
+
+  createPage({
+    path: '/tags',
+    component: allTagsTemplate,
+    context: {
+      tags: tags.sort()
+    }
+  });
+
+  tags.forEach(tag => {
+    const postsByTag = postsByTags[tag];
+    createPage({
+      path: `/tags/${tag}`,
+      component: tagsTemplate,
+      context: {
+        posts: postsByTag,
+        tagName: tag
+      }
+    });
+  });
+}
+
 exports.createPages = ({ boundActionCreators, graphql }) => {
   const { createPage } = boundActionCreators;
   const blogPostTemplate = path.resolve('src/templates/blog-post.js');
@@ -29,6 +69,9 @@ exports.createPages = ({ boundActionCreators, graphql }) => {
     }
 
     const posts = result.data.allMarkdownRemark.edges;
+
+    createTagPages(createPage, posts);
+
     const lastIndex = posts.length - 1;
 
     posts.forEach(({ node }, index) => {
